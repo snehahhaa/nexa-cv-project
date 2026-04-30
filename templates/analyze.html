@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta http-equiv="refresh" content="0;url={{ url_for('analyze') }}"/>
+  <title>Analysing — NexaCV</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}"/>
+</head>
+<body style="background:var(--bg);">
+<div class="loading-overlay" style="display:flex;">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">Running full analysis…</div>
+</div>
+</body>
+</html>

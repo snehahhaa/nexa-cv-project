@@ -1,0 +1,8 @@
+For the improvement suggestions section, focus on:
+- Specific sections of the resume that need rewording or expansion
+- Quantifiable achievements the candidate should add (e.g., "Add metrics to your project outcomes")
+- Format and structure improvements that help ATS parsers
+- Skills or certifications worth acquiring to strengthen the application
+- Tailoring language to mirror the job description's terminology
+
+Each suggestion should be immediately actionable and specific to the role, not generic advice.

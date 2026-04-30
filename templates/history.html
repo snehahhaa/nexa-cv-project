@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}My History — NexaCV{% endblock %}
+
+{% block header %}
+<h1 class="page-title">My History</h1>
+<p class="page-subtitle">All your past resume analyses — {{ records | length }} record(s)</p>
+{% endblock %}
+
+{% block content %}
+{% if not records %}
+<div style="text-align:center;padding:60px 24px;">
+  <div style="width:64px;height:64px;background:var(--surface);border:1px solid var(--border);border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" width="30" height="30"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+  </div>
+  <div style="font-size:1rem;font-weight:600;color:var(--text2);margin-bottom:6px;">No analyses yet</div>
+  <div style="font-size:0.875rem;color:var(--text3);margin-bottom:20px;">Upload a resume and run an analysis to see your history here.</div>
+  <a href="{{ url_for('upload') }}" class="btn btn-primary">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    Upload Resume
+  </a>
+</div>
+
+{% else %}
+
+{% for r in records %}
+{% set score = r.ats_score | default(0) %}
+{% set color = '#10b981' if score >= 70 else '#f59e0b' if score >= 40 else '#ef4444' %}
+{% set bg    = 'rgba(16,185,129,0.12)' if score >= 70 else 'rgba(245,158,11,0.12)' if score >= 40 else 'rgba(239,68,68,0.12)' %}
+
+<div class="history-item" style="position:relative;">
+
+  <!-- Score Badge -->
+  <div class="history-score-badge" style="background:{{ bg }};color:{{ color }};">
+    <span class="history-score-num">{{ score }}</span>
+    <span class="history-score-grade">{{ r.grade }}</span>
+  </div>
+
+  <!-- Info -->
+  <div class="history-info">
+    <div class="history-filename">
+      <svg viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" width="14" height="14" style="vertical-align:middle;margin-right:5px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>
+      {{ r.resume_filename or 'Unknown file' }}
+    </div>
+    {% if r.job_description %}
+    <div class="history-jd">{{ r.job_description[:120] }}{% if r.job_description | length > 120 %}…{% endif %}</div>
+    {% endif %}
+    <div class="history-meta" style="margin-top:6px;">
+      <span style="color:var(--green);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><polyline points="20 6 9 17 4 12"/></svg>
+        {{ r.matched_skills }} matched
+      </span>
+      <span style="color:var(--red);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        {{ r.missing_skills }} missing
+      </span>
+      <span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        {{ r.created_at }}
+      </span>
+    </div>
+  </div>
+
+  <!-- Delete Button -->
+  <form method="POST" action="{{ url_for('delete_history', record_id=r.id) }}"
+        onsubmit="return confirm('Delete this analysis record?');"
+        style="margin-left:auto;flex-shrink:0;">
+    <button type="submit" title="Delete record"
+      style="background:transparent;border:1px solid rgba(239,68,68,0.25);border-radius:8px;
+             padding:8px 10px;cursor:pointer;color:#f87171;transition:all 0.15s;display:flex;align-items:center;gap:6px;font-size:0.8rem;font-weight:500;"
+      onmouseover="this.style.background='rgba(239,68,68,0.12)'"
+      onmouseout="this.style.background='transparent'">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15">
+        <polyline points="3 6 5 6 21 6"/>
+        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+        <path d="M10 11v6M14 11v6"/>
+        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+      </svg>
+      Delete
+    </button>
+  </form>
+
+</div>
+{% endfor %}
+{% endif %}
+{% endblock %}

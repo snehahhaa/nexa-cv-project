@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+{% block title %}Analysis Results — NexaCV{% endblock %}
+
+{% block header %}
+<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;">
+  <div>
+    <h1 class="page-title">Analysis Results</h1>
+    <p class="page-subtitle">{{ filename or 'Resume' }} — AI-powered breakdown</p>
+  </div>
+  <a href="{{ url_for('download_report') }}" class="btn btn-outline">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    Download PDF Report
+  </a>
+</div>
+{% endblock %}
+
+{% block content %}
+{% set score      = ats.total_score | default(0) %}
+{% set sub        = ats.sub_scores  | default({}) %}
+{% set scorecolor = '#10b981' if score >= 70 else '#f59e0b' if score >= 40 else '#ef4444' %}
+{% set scorebg    = 'rgba(16,185,129,0.12)' if score >= 70 else 'rgba(245,158,11,0.12)' if score >= 40 else 'rgba(239,68,68,0.12)' %}
+
+<!-- Score + Breakdown + Stats -->
+<div class="grid-4 mb-24">
+
+  <!-- Score Ring -->
+  <div class="card">
+    <div class="card-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      ATS Score
+    </div>
+    <div class="score-ring-wrap">
+      <div class="score-ring">
+        <svg viewBox="0 0 120 120" width="160" height="160">
+          <circle class="score-ring-bg" cx="60" cy="60" r="50"/>
+          <circle class="score-ring-fill" id="scoreRing"
+            cx="60" cy="60" r="50"
+            stroke="{{ scorecolor }}"
+            stroke-dasharray="314"
+            stroke-dashoffset="314"/>
+        </svg>
+        <div class="score-ring-label">
+          <span class="score-number" style="color:{{ scorecolor }};">{{ score }}</span>
+          <span class="score-denom">/100</span>
+        </div>
+      </div>
+      <span class="score-grade" style="background:{{ scorebg }};color:{{ scorecolor }};">
+        Grade {{ ats.grade | default('—') }}
+      </span>
+    </div>
+  </div>
+
+  <!-- Sub-score Bars -->
+  <div class="card" style="grid-column:span 2;">
+    <div class="card-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Score Breakdown
+    </div>
+    {% for label, key, color in [
+      ('Skill Match','skill_match','#6366f1'),
+      ('Experience', 'experience', '#10b981'),
+      ('Education',  'education',  '#f59e0b'),
+      ('Keywords',   'keyword',    '#a855f7')
+    ] %}
+    {% set val = sub[key] if key in sub else 0 %}
+    <div class="sub-score-row">
+      <span class="sub-score-label">{{ label }}</span>
+      <div class="sub-score-bar-wrap">
+        <div class="sub-score-bar" style="width:{{ val }}%;background:{{ color }};"></div>
+      </div>
+      <span class="sub-score-val">{{ val }}</span>
+    </div>
+    {% endfor %}
+    {% if ats.feedback %}
+    <div style="margin-top:12px;padding:10px 12px;background:var(--bg3);border-radius:var(--radius-sm);font-size:0.82rem;color:var(--text2);border:1px solid var(--border);">
+      {{ ats.feedback[0] }}
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Quick Stats -->
+  <div style="display:flex;flex-direction:column;gap:12px;">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:var(--green-dim);color:var(--green);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="stat-value" style="color:var(--green);">{{ skills.matched_skills | default([]) | length }}</div>
+      <div class="stat-label">Matched Skills</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:var(--red-dim);color:var(--red);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </div>
+      <div class="stat-value" style="color:var(--red);">{{ skills.missing_skills | default([]) | length }}</div>
+      <div class="stat-label">Missing Skills</div>
+    </div>
+  </div>
+</div>
+
+<!-- Skills -->
+<div class="grid-2 mb-24">
+  <div class="card">
+    <div class="card-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="20 6 9 17 4 12"/></svg>
+      Matched Skills
+    </div>
+    <div class="pills-wrap">
+      {% for skill in skills.matched_skills | default([]) %}
+        <span class="pill pill-green">{{ skill }}</span>
+      {% else %}
+        <span class="text-muted">No matched skills found.</span>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      Missing Skills
+    </div>
+    <div class="pills-wrap">
+      {% for skill in skills.missing_skills | default([]) %}
+        <span class="pill pill-red">{{ skill }}</span>
+      {% else %}
+        <span style="color:var(--green);font-size:0.875rem;font-weight:500;">No missing skills — great match!</span>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- AI Analysis -->
+<div class="grid-2 mb-24">
+  <div>
+    <div class="ai-section mb-24">
+      <div class="ai-section-title" style="color:var(--green);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="background:var(--green-dim);border-radius:6px;padding:3px;flex-shrink:0;">
+          <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+        </svg>
+        Strengths
+      </div>
+      {% for item in ai.strengths | default([]) %}
+      <div class="ai-item"><div class="ai-item-dot" style="background:var(--green);"></div>{{ item }}</div>
+      {% else %}<div class="text-muted">No data available.</div>{% endfor %}
+    </div>
+    <div class="ai-section">
+      <div class="ai-section-title" style="color:var(--accent2);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="background:rgba(99,102,241,0.15);border-radius:6px;padding:3px;flex-shrink:0;">
+          <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/>
+        </svg>
+        Recommended Keywords
+      </div>
+      <div class="pills-wrap">
+        {% for kw in ai.keywords | default([]) %}
+          <span class="pill pill-purple">{{ kw }}</span>
+        {% else %}<span class="text-muted">No keywords available.</span>{% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="ai-section mb-24">
+      <div class="ai-section-title" style="color:var(--amber);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="background:var(--amber-dim);border-radius:6px;padding:3px;flex-shrink:0;">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+        Weaknesses
+      </div>
+      {% for item in ai.weaknesses | default([]) %}
+      <div class="ai-item"><div class="ai-item-dot" style="background:var(--amber);"></div>{{ item }}</div>
+      {% else %}<div class="text-muted">No data available.</div>{% endfor %}
+    </div>
+    <div class="ai-section">
+      <div class="ai-section-title" style="color:var(--red);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="background:var(--red-dim);border-radius:6px;padding:3px;flex-shrink:0;">
+          <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+        </svg>
+        Missing Skills (AI View)
+      </div>
+      {% for item in ai.missing_skills | default([]) %}
+      <div class="ai-item"><div class="ai-item-dot" style="background:var(--red);"></div>{{ item }}</div>
+      {% else %}<div class="text-muted">No data available.</div>{% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- Suggestions -->
+<div class="ai-section">
+  <div class="ai-section-title" style="color:#c084fc;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="background:rgba(192,132,252,0.15);border-radius:6px;padding:3px;flex-shrink:0;">
+      <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+    </svg>
+    Improvement Suggestions
+  </div>
+  <div class="grid-2">
+    {% for item in ai.suggestions | default([]) %}
+    <div class="ai-item"><div class="ai-item-dot" style="background:#c084fc;"></div>{{ item }}</div>
+    {% else %}<div class="text-muted">No suggestions available.</div>{% endfor %}
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+window.addEventListener('load', () => {
+  const ring   = document.getElementById('scoreRing');
+  const score  = {{ score }};
+  const offset = 314 - (score / 100) * 314;
+  setTimeout(() => { ring.style.strokeDashoffset = offset; }, 300);
+});
+</script>
+{% endblock %}

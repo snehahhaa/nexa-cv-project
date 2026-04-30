@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — NexaCV{% endblock %}
+
+{% block header %}
+<h1 class="page-title">Dashboard</h1>
+<p class="page-subtitle">Visual overview of your resume analysis</p>
+{% endblock %}
+
+{% block content %}
+{% set score   = ats.total_score | default(0) %}
+{% set sub     = ats.sub_scores  | default({}) %}
+{% set sm      = sub.skill_match | default(0) %}
+{% set ex      = sub.experience  | default(0) %}
+{% set ed      = sub.education   | default(0) %}
+{% set kw      = sub.keyword     | default(0) %}
+{% set matched = skills.matched_skills | default([]) | length %}
+{% set missing = skills.missing_skills | default([]) | length %}
+{% set total_skills = matched + missing %}
+
+{% set scorecolor = '#10b981' if score >= 70 else '#f59e0b' if score >= 40 else '#ef4444' %}
+{% set scorebg    = 'rgba(16,185,129,0.15)' if score >= 70 else 'rgba(245,158,11,0.15)' if score >= 40 else 'rgba(239,68,68,0.15)' %}
+
+<!-- ── Stats Row ── -->
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px;">
+
+  <div class="stat-card">
+    <div class="stat-icon" style="background:rgba(99,102,241,0.15);color:#6366f1;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    </div>
+    <div class="stat-value" style="color:#6366f1;">{{ score }}</div>
+    <div class="stat-label">ATS Score</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon" style="background:rgba(16,185,129,0.15);color:#10b981;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    </div>
+    <div class="stat-value" style="color:#10b981;">{{ sm }}</div>
+    <div class="stat-label">Skill Match %</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon" style="background:rgba(168,85,247,0.15);color:#a855f7;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <div class="stat-value" style="color:#a855f7;">{{ matched }}</div>
+    <div class="stat-label">Matched Skills</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon" style="background:rgba(239,68,68,0.15);color:#ef4444;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </div>
+    <div class="stat-value" style="color:#ef4444;">{{ missing }}</div>
+    <div class="stat-label">Missing Skills</div>
+  </div>
+
+</div>
+
+<!-- ── Row 1: Score Ring + Sub-scores ── -->
+<div style="display:grid;grid-template-columns:280px 1fr;gap:20px;margin-bottom:20px;">
+
+  <!-- Score Ring (pure CSS) -->
+  <div class="card" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;">
+    <div style="font-size:0.75rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text3);margin-bottom:20px;">ATS Compatibility</div>
+    <div style="position:relative;width:160px;height:160px;">
+      <svg viewBox="0 0 160 160" width="160" height="160" style="transform:rotate(-90deg);">
+        <circle cx="80" cy="80" r="65" fill="none" stroke="var(--surface2)" stroke-width="12"/>
+        <circle cx="80" cy="80" r="65" fill="none"
+          stroke="{{ scorecolor }}"
+          stroke-width="12"
+          stroke-linecap="round"
+          stroke-dasharray="{{ (score / 100 * 408.41) | round(2) }} 408.41"
+          style="filter:drop-shadow(0 0 8px {{ scorecolor }});"/>
+      </svg>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+        <span style="font-size:2.4rem;font-weight:800;color:{{ scorecolor }};line-height:1;font-family:'Syne',sans-serif;">{{ score }}</span>
+        <span style="font-size:0.75rem;color:var(--text3);margin-top:2px;">/100</span>
+      </div>
+    </div>
+    <div style="margin-top:16px;padding:4px 16px;border-radius:99px;font-size:0.8rem;font-weight:700;background:{{ scorebg }};color:{{ scorecolor }};">
+      Grade {{ ats.grade | default('—') }} —
+      {% if score >= 80 %}Excellent
+      {% elif score >= 65 %}Good
+      {% elif score >= 50 %}Average
+      {% else %}Needs Work{% endif %}
+    </div>
+  </div>
+
+  <!-- Sub-score bars -->
+  <div class="card">
+    <div class="card-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Score Breakdown
+    </div>
+
+    {% for label, val, color in [
+      ('Skill Match', sm, '#6366f1'),
+      ('Experience',  ex, '#10b981'),
+      ('Education',   ed, '#f59e0b'),
+      ('Keywords',    kw, '#a855f7')
+    ] %}
+    <div style="margin-bottom:18px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <span style="font-size:0.85rem;color:var(--text2);font-weight:500;">{{ label }}</span>
+        <span style="font-size:0.85rem;font-weight:700;color:{{ color }};">{{ val }}/100</span>
+      </div>
+      <div style="height:8px;background:var(--surface2);border-radius:99px;overflow:hidden;">
+        <div style="height:100%;width:{{ val }}%;background:{{ color }};border-radius:99px;transition:width 1s ease;box-shadow:0 0 8px {{ color }}44;"></div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+</div>
+
+<!-- ── Row 2: Skill Match + Sub-score Bars ── -->
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
+
+  <!-- Skill match visual bars -->
+  <div class="card">
+    <div class="card-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="3" y="3" width="18" height="18" rx="2"/><rect x="7" y="14" width="3" height="5"/><rect x="11" y="10" width="3" height="9"/><rect x="15" y="6" width="3" height="13"/></svg>
+      Skill Match Breakdown
+    </div>
+
+    {% set match_pct = ((matched / total_skills) * 100) | round if total_skills > 0 else 0 %}
+    {% set miss_pct  = ((missing / total_skills) * 100) | round if total_skills > 0 else 0 %}
+
+    <!-- Stacked bar -->
+    <div style="height:40px;border-radius:10px;overflow:hidden;display:flex;margin-bottom:16px;">
+      {% if matched > 0 %}
+      <div style="width:{{ match_pct }}%;background:linear-gradient(90deg,#059669,#10b981);display:flex;align-items:center;justify-content:center;font-size:0.78rem;font-weight:700;color:white;">
+        {% if match_pct > 10 %}{{ matched }}{% endif %}
+      </div>
+      {% endif %}
+      {% if missing > 0 %}
+      <div style="width:{{ miss_pct }}%;background:linear-gradient(90deg,#dc2626,#ef4444);display:flex;align-items:center;justify-content:center;font-size:0.78rem;font-weight:700;color:white;">
+        {% if miss_pct > 10 %}{{ missing }}{% endif %}
+      </div>
+      {% endif %}
+    </div>
+
+    <div style="display:flex;gap:20px;justify-content:center;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div style="width:12px;height:12px;border-radius:3px;background:#10b981;"></div>
+        <span style="font-size:0.82rem;color:var(--text2);">Matched <strong style="color:#10b981;">{{ matched }}</strong></span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div style="width:12px;height:12px;border-radius:3px;background:#ef4444;"></div>
+        <span style="font-size:0.82rem;color:var(--text2);">Missing <strong style="color:#ef4444;">{{ missing }}</strong></span>
+      </div>
+    </div>
+
+    <!-- Individual bars -->
+    <div style="margin-top:20px;display:flex;align-items:flex-end;gap:12px;height:100px;padding:0 8px;">
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;">
+        <span style="font-size:0.75rem;font-weight:700;color:#10b981;">{{ matched }}</span>
+        <div style="width:100%;background:linear-gradient(180deg,#059669,#10b981);border-radius:6px 6px 0 0;height:{{ [((matched / [total_skills,1]|max) * 80)|int, 4]|max }}px;"></div>
+        <span style="font-size:0.7rem;color:var(--text3);">Matched</span>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;">
+        <span style="font-size:0.75rem;font-weight:700;color:#ef4444;">{{ missing }}</span>
+        <div style="width:100%;background:linear-gradient(180deg,#dc2626,#ef4444);border-radius:6px 6px 0 0;height:{{ [((missing / [total_skills,1]|max) * 80)|int, 4]|max }}px;"></div>
+        <span style="font-size:0.7rem;color:var(--text3);">Missing</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Horizontal sub-score bars -->
+  <div class="card">
+    <div class="card-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      Sub-Scores Overview
+    </div>
+
+    {% for label, val, color in [
+      ('Skill Match', sm, '#6366f1'),
+      ('Experience',  ex, '#10b981'),
+      ('Education',   ed, '#f59e0b'),
+      ('Keywords',    kw, '#a855f7')
+    ] %}
+    <div style="margin-bottom:16px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
+        <span style="font-size:0.82rem;color:var(--text2);">{{ label }}</span>
+        <span style="font-size:0.82rem;font-weight:700;color:{{ color }};">{{ val }}%</span>
+      </div>
+      <div style="height:10px;background:var(--surface2);border-radius:99px;overflow:hidden;">
+        <div style="height:100%;width:{{ val }}%;background:{{ color }};border-radius:99px;"></div>
+      </div>
+    </div>
+    {% endfor %}
+
+    <!-- Overall feedback -->
+    {% if ats.feedback %}
+    <div style="margin-top:8px;padding:10px 14px;background:var(--bg3);border-radius:8px;border:1px solid var(--border);font-size:0.8rem;color:var(--text2);">
+      {{ ats.feedback[0] }}
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<!-- ── Row 3: Matched vs Missing skill pills ── -->
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+  <div class="card">
+    <div class="card-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="20 6 9 17 4 12"/></svg>
+      Matched Skills
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;">
+      {% for skill in skills.matched_skills | default([]) %}
+        <span class="pill pill-green">{{ skill }}</span>
+      {% else %}
+        <span class="text-muted">No matched skills.</span>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      Missing Skills
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;">
+      {% for skill in skills.missing_skills | default([]) %}
+        <span class="pill pill-red">{{ skill }}</span>
+      {% else %}
+        <span style="color:var(--green);font-size:0.875rem;font-weight:500;">No missing skills!</span>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sign In — NexaCV</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}"/>
+</head>
+<body>
+<div class="auth-page">
+  <div class="auth-glow auth-glow-1"></div>
+  <div class="auth-glow auth-glow-2"></div>
+
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" width="20" height="20"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>
+      </div>
+      <span class="logo-text">NexaCV</span>
+    </div>
+
+    <h1 class="auth-title">Welcome back</h1>
+    <p class="auth-sub">Sign in to continue to your workspace</p>
+
+    {% if error %}
+    <div class="alert alert-error">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      {{ error }}
+    </div>
+    {% endif %}
+
+    <form method="POST" action="{{ url_for('login') }}">
+      <div class="form-group">
+        <label class="form-label">Username</label>
+        <input type="text" name="username" class="form-input" placeholder="Enter your username" required autocomplete="username"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input type="password" name="password" class="form-input" placeholder="Enter your password" required autocomplete="current-password"/>
+      </div>
+      <button type="submit" class="btn btn-primary btn-full btn-lg" style="margin-top:8px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+        Sign In
+      </button>
+    </form>
+
+    <div class="auth-link">
+      Don't have an account? <a href="{{ url_for('register') }}">Create one</a>
+    </div>
+  </div>
+</div>
+</body>
+</html>
