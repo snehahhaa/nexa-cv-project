@@ -1,4 +1,4 @@
-```python
+
 """
 auth.py - NexaCV Authentication & History
 SQLite + bcrypt user management and analysis history.
