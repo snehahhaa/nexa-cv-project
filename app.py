@@ -152,21 +152,13 @@ def upload():
 
     return render_template("upload.html", username=session.get("username"), error=error)
 
-# ---------- RUN ----------
 @app.route("/run")
 @login_required
 def run():
-    aid = session.get("analysis_id")
-
-    if not aid:
-        return redirect(url_for("upload"))
-
-    data = store_load(aid)
-
-    if not data:
-        return redirect(url_for("upload"))
-
     try:
+        aid = session.get("analysis_id")
+        data = store_load(aid)
+
         skills = extract_skills(data["resume_text"], data["job_description"])
         ats    = calculate_ats_score(data["resume_text"], data["job_description"], skills)
         ai     = analyze_resume_with_groq(data["resume_text"], data["job_description"])
@@ -174,20 +166,10 @@ def run():
         data.update({"skills": skills, "ats": ats, "ai": ai, "done": True})
         store_save(aid, data)
 
-        save_analysis_history(
-            user_id=session["user_id"],
-            resume_filename=data["resume_filename"],
-            ats_result=ats,
-            skills_data=skills,
-            ai_analysis=ai,
-            job_description=data["job_description"],
-        )
-
         return redirect(url_for("results"))
 
     except Exception as e:
-        print("[RUN ERROR]", e)
-        return render_template("error.html", error=str(e))
+        return f"<h1>ERROR:</h1><pre>{str(e)}</pre>"
 
 # ---------- RESULTS ----------
 @app.route("/results")
