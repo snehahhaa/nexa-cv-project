@@ -41,27 +41,32 @@
     <nav class="sidebar-nav">
       <div class="nav-section-label">Workspace</div>
 
-      <a href="{{ url_for('upload') }}" class="nav-item {% if request.endpoint == 'upload' %}active{% endif %}">
+      <a href="{{ url_for('upload') }}" 
+         class="nav-item {% if request.endpoint == 'upload' %}active{% endif %}">
         Upload Resume
       </a>
 
-      <a href="{{ url_for('results') }}" class="nav-item {% if request.endpoint == 'results' %}active{% endif %}">
+      <a href="{{ url_for('results') }}" 
+         class="nav-item {% if request.endpoint == 'results' %}active{% endif %}">
         Analysis
       </a>
 
-      <a href="{{ url_for('dashboard') }}" class="nav-item {% if request.endpoint == 'dashboard' %}active{% endif %}">
-        Dashboard
-      </a>
+      <!-- Disabled for now (no backend route yet) -->
+      <div class="nav-item" style="opacity:0.5; cursor:not-allowed;">
+        Dashboard (coming soon)
+      </div>
 
       <div class="nav-section-label" style="margin-top:12px;">Account</div>
 
-      <a href="{{ url_for('history') }}" class="nav-item {% if request.endpoint == 'history' %}active{% endif %}">
-        My History
-      </a>
+      <!-- Disabled -->
+      <div class="nav-item" style="opacity:0.5; cursor:not-allowed;">
+        My History (coming soon)
+      </div>
 
-      <a href="{{ url_for('download_report') }}" class="nav-item {% if request.endpoint == 'download_report' %}active{% endif %}">
-        Download Report
-      </a>
+      <!-- Disabled -->
+      <div class="nav-item" style="opacity:0.5; cursor:not-allowed;">
+        Download Report (coming soon)
+      </div>
     </nav>
 
     <div class="sidebar-footer">
@@ -82,6 +87,7 @@
   </main>
 
 </div>
+
 {% block scripts %}{% endblock %}
 </body>
 </html>
