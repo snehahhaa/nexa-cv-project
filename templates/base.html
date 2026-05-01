@@ -4,28 +4,31 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>{% block title %}NexaCV{% endblock %}</title>
+
   <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}"/>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
+
 <body>
 <div class="app-shell">
 
-  <!-- Sidebar -->
+  <!-- ───── SIDEBAR ───── -->
   <aside class="sidebar">
+
+    <!-- Logo -->
     <div class="sidebar-logo">
       <a href="{{ url_for('upload') }}" class="logo-mark">
         <div class="logo-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" width="20" height="20">
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
             <polyline points="14 2 14 8 20 8"/>
-            <line x1="16" y1="13" x2="8" y2="13"/>
-            <line x1="16" y1="17" x2="8" y2="17"/>
           </svg>
         </div>
         <span class="logo-text">NexaCV</span>
       </a>
     </div>
 
+    <!-- User -->
     {% if username %}
     <div class="sidebar-user">
       <div class="user-avatar">
@@ -38,52 +41,58 @@
     </div>
     {% endif %}
 
+    <!-- NAVIGATION -->
     <nav class="sidebar-nav">
       <div class="nav-section-label">Workspace</div>
 
-      <a href="{{ url_for('upload') }}" 
+      <a href="{{ url_for('upload') }}"
          class="nav-item {% if request.endpoint == 'upload' %}active{% endif %}">
         Upload Resume
       </a>
 
-      <a href="{{ url_for('results') }}" 
+      <a href="{{ url_for('results') }}"
          class="nav-item {% if request.endpoint == 'results' %}active{% endif %}">
         Analysis
       </a>
 
-      <!-- Disabled for now (no backend route yet) -->
-      <div class="nav-item" style="opacity:0.5; cursor:not-allowed;">
-        Dashboard (coming soon)
-      </div>
+      <a href="{{ url_for('dashboard') }}"
+         class="nav-item {% if request.endpoint == 'dashboard' %}active{% endif %}">
+        Dashboard
+      </a>
 
       <div class="nav-section-label" style="margin-top:12px;">Account</div>
 
-      <!-- Disabled -->
-      <div class="nav-item" style="opacity:0.5; cursor:not-allowed;">
-        My History (coming soon)
-      </div>
+      <a href="{{ url_for('history') }}"
+         class="nav-item {% if request.endpoint == 'history' %}active{% endif %}">
+        My History
+      </a>
 
-      <!-- Disabled -->
-      <div class="nav-item" style="opacity:0.5; cursor:not-allowed;">
-        Download Report (coming soon)
-      </div>
+      <a href="{{ url_for('download_report') }}"
+         class="nav-item">
+        Download Report
+      </a>
     </nav>
 
+    <!-- Logout -->
     <div class="sidebar-footer">
       <a href="{{ url_for('logout') }}" class="logout-btn">
         Sign Out
       </a>
     </div>
+
   </aside>
 
-  <!-- Main Content -->
+  <!-- ───── MAIN CONTENT ───── -->
   <main class="main-content">
+
     <div class="page-header">
       {% block header %}{% endblock %}
     </div>
+
     <div class="page-body">
       {% block content %}{% endblock %}
     </div>
+
   </main>
 
 </div>
