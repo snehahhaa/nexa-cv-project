@@ -17,6 +17,12 @@ app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "nexacv-secret-2024")
 app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024
 
+# ---------- ERROR HANDLER (VERY IMPORTANT) ----------
+@app.errorhandler(Exception)
+def handle_error(e):
+    return f"<h2>ERROR:</h2><pre>{str(e)}</pre>", 500
+
+
 # ---------- STORAGE ----------
 STORE_DIR = Path(__file__).parent / "data" / "store"
 STORE_DIR.mkdir(parents=True, exist_ok=True)
@@ -42,7 +48,8 @@ def get_data():
     aid = session.get("analysis_id")
     return store_load(aid) if aid else None
 
-# ---------- AUTH DECORATOR ----------
+
+# ---------- AUTH ----------
 def login_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
@@ -51,8 +58,8 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated
 
-# ---------- ROUTES ----------
 
+# ---------- ROUTES ----------
 @app.route("/")
 def index():
     session.clear()
@@ -61,6 +68,7 @@ def index():
 @app.route("/home")
 def landing():
     return render_template("landing.html")
+
 
 # ---------- LOGIN (EMAIL BASED) ----------
 @app.route("/login", methods=["GET", "POST"])
@@ -86,6 +94,7 @@ def login():
 
     return render_template("login.html", error=error)
 
+
 # ---------- REGISTER ----------
 @app.route("/register", methods=["GET", "POST"])
 def register():
@@ -108,10 +117,12 @@ def register():
 
     return render_template("register.html", error=error, success=success)
 
+
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect(url_for("login"))
+
 
 # ---------- UPLOAD ----------
 @app.route("/upload", methods=["GET", "POST"])
@@ -148,28 +159,53 @@ def upload():
                     return redirect(url_for("run"))
 
             except Exception as e:
-                error = f"Error processing file: {str(e)}"
+                return f"<h1>UPLOAD ERROR:</h1><pre>{str(e)}</pre>"
 
     return render_template("upload.html", username=session.get("username"), error=error)
 
+
+# ---------- RUN ----------
 @app.route("/run")
 @login_required
 def run():
     try:
         aid = session.get("analysis_id")
+
+        if not aid:
+            return "ERROR: No analysis_id in session"
+
         data = store_load(aid)
+
+        if not data:
+            return "ERROR: No stored data found"
 
         skills = extract_skills(data["resume_text"], data["job_description"])
         ats    = calculate_ats_score(data["resume_text"], data["job_description"], skills)
         ai     = analyze_resume_with_groq(data["resume_text"], data["job_description"])
 
-        data.update({"skills": skills, "ats": ats, "ai": ai, "done": True})
+        data.update({
+            "skills": skills,
+            "ats": ats,
+            "ai": ai,
+            "done": True
+        })
+
         store_save(aid, data)
+
+        save_analysis_history(
+            user_id=session["user_id"],
+            resume_filename=data["resume_filename"],
+            ats_result=ats,
+            skills_data=skills,
+            ai_analysis=ai,
+            job_description=data["job_description"],
+        )
 
         return redirect(url_for("results"))
 
     except Exception as e:
-        return f"<h1>ERROR:</h1><pre>{str(e)}</pre>"
+        return f"<h1>RUN ERROR:</h1><pre>{str(e)}</pre>"
+
 
 # ---------- RESULTS ----------
 @app.route("/results")
@@ -177,8 +213,10 @@ def run():
 def results():
     data = get_data()
 
+    print("DEBUG DATA:", data)
+
     if not data:
-        return render_template("error.html", error="No analysis data found. Please upload again.")
+        return "<h1>No data found. Please upload again.</h1>"
 
     return render_template(
         "results.html",
@@ -189,7 +227,8 @@ def results():
         filename=data.get("resume_filename", "")
     )
 
-# ---------- START SERVER ----------
+
+# ---------- START ----------
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(host="0.0.0.0", port=port, debug=True)
