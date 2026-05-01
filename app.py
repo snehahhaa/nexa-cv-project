@@ -1,9 +1,10 @@
 """
-app.py - NexaCV Flask Application (FULL WORKING VERSION)
+app.py - NexaCV Flask Application (FINAL WORKING VERSION)
 """
 
 import os, json, uuid
 from pathlib import Path
+from io import BytesIO
 from flask import Flask, render_template, request, redirect, url_for, session, send_file
 from werkzeug.utils import secure_filename
 from dotenv import load_dotenv
@@ -238,17 +239,17 @@ def results():
 @app.route("/dashboard")
 @login_required
 def dashboard():
-    history = get_analysis_history(session["user_id"])
+    data = get_data()
 
-    total = len(history)
-    avg_score = sum([h["ats_score"] for h in history]) // total if total else 0
+    if not data:
+        return redirect(url_for("upload"))
 
     return render_template(
         "dashboard.html",
         username=session.get("username"),
-        total_reports=total,
-        avg_score=avg_score,
-        history=history[:5]
+        skills=data.get("skills", {}),
+        ats=data.get("ats", {}),
+        ai=data.get("ai", {})
     )
 
 
@@ -261,7 +262,7 @@ def history():
     return render_template("history.html", username=session.get("username"), records=records)
 
 
-@app.route("/delete/<int:record_id>")
+@app.route("/delete/<int:record_id>", methods=["POST"])
 @login_required
 def delete_record(record_id):
     delete_analysis_record(record_id, session["user_id"])
@@ -278,20 +279,27 @@ def download_report():
     if not data:
         return "No report available"
 
-    pdf_file = generate_pdf_report(
-        data["resume_text"],
-        data["job_description"],
-        data["skills"],
-        data["ats"],
-        data["ai"]
-    )
+    try:
+        pdf_bytes = generate_pdf_report(
+            data["resume_text"],
+            data["job_description"],
+            data["skills"],
+            data["ats"],
+            data["ai"]
+        )
 
-    return send_file(
-        pdf_file,
-        as_attachment=True,
-        download_name="nexacv_report.pdf",
-        mimetype="application/pdf"
-    )
+        pdf_file = BytesIO(pdf_bytes)
+
+        return send_file(
+            pdf_file,
+            as_attachment=True,
+            download_name="nexacv_report.pdf",
+            mimetype="application/pdf"
+        )
+
+    except Exception as e:
+        print("[PDF ERROR]", e)
+        return f"PDF Error: {str(e)}"
 
 
 # ── RUN SERVER ──────────────────────────────────────
