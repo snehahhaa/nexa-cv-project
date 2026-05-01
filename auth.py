@@ -1,24 +1,27 @@
-
 """
 auth.py - NexaCV Authentication & History
 SQLite + bcrypt user management and analysis history.
 """
+
 import sqlite3
 import bcrypt
 import json
 from pathlib import Path
 
-# Database path
+# ── DATABASE PATH ─────────────────────────────
 DB_PATH = Path(__file__).parent / "data" / "nexacv.db"
 
-# ------------------ DB CONNECTION ------------------
 
+# ── DB CONNECTION ─────────────────────────────
 def get_connection():
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+
     conn = sqlite3.connect(str(DB_PATH), check_same_thread=False)
     conn.row_factory = sqlite3.Row
+
     _create_tables(conn)
     return conn
+
 
 def _create_tables(conn):
     conn.execute("""
@@ -52,17 +55,19 @@ def _create_tables(conn):
 
     conn.commit()
 
-# ------------------ PASSWORD ------------------
 
+# ── PASSWORD UTILS ─────────────────────────────
 def hash_password(password):
     return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+
 
 def verify_password(password, hashed):
     return bcrypt.checkpw(password.encode(), hashed.encode())
 
-# ------------------ REGISTER ------------------
 
+# ── REGISTER ───────────────────────────────────
 def register_user(username, email, password):
+
     if len(username) < 3:
         return {"success": False, "error": "Username must be at least 3 characters."}
 
@@ -81,21 +86,27 @@ def register_user(username, email, password):
         )
 
         conn.commit()
+
         return {"success": True}
 
     except sqlite3.IntegrityError as e:
-        if "username" in str(e):
+        msg = str(e).lower()
+
+        if "username" in msg:
             return {"success": False, "error": "Username already exists."}
-        if "email" in str(e):
+
+        if "email" in msg:
             return {"success": False, "error": "Email already registered."}
+
         return {"success": False, "error": "Registration failed."}
 
     finally:
         conn.close()
 
-# ------------------ LOGIN (EMAIL BASED) ------------------
 
+# ── LOGIN (EMAIL BASED) ─────────────────────────
 def login_user(email, password):
+
     try:
         conn = get_connection()
 
@@ -119,9 +130,10 @@ def login_user(email, password):
         "username": user["username"]
     }
 
-# ------------------ SAVE HISTORY ------------------
 
+# ── SAVE ANALYSIS HISTORY ───────────────────────
 def save_analysis_history(user_id, resume_filename, ats_result, skills_data, ai_analysis, job_description=""):
+
     try:
         conn = get_connection()
 
@@ -156,14 +168,15 @@ def save_analysis_history(user_id, resume_filename, ats_result, skills_data, ai_
         conn.commit()
 
     except Exception as e:
-        print(f"[auth] save_analysis_history error: {e}")
+        print("[auth] save_analysis_history error:", e)
 
     finally:
         conn.close()
 
-# ------------------ GET HISTORY ------------------
 
+# ── GET HISTORY ─────────────────────────────────
 def get_analysis_history(user_id):
+
     try:
         conn = get_connection()
 
@@ -199,9 +212,10 @@ def get_analysis_history(user_id):
 
     return history
 
-# ------------------ DELETE ------------------
 
+# ── DELETE RECORD ───────────────────────────────
 def delete_analysis_record(record_id, user_id):
+
     try:
         conn = get_connection()
 
@@ -213,8 +227,7 @@ def delete_analysis_record(record_id, user_id):
         conn.commit()
 
     except Exception as e:
-        print(f"[auth] delete_analysis_record error: {e}")
+        print("[auth] delete_analysis_record error:", e)
 
     finally:
         conn.close()
-
